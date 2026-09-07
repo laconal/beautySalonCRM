@@ -1,6 +1,9 @@
+from typing import Literal
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
+    ENVIRONMENT: Literal["development", "production"]
     DATABASE_URL: str
     PRIVATE_KEY_PATH: str
     PUBLIC_KEY_PATH: str

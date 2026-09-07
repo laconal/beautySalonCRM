@@ -8,6 +8,7 @@ from src.core.exceptions import register_exception_handlers
 from src.database.audit_listener import register_audit_listener
 from src.exceptions.base import BaseAppException
 from src.routes import protected_router, open_router
+from src.core.config import settings
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -22,10 +23,12 @@ app = FastAPI(lifespan = lifespan,
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins = ["*"],
+    allow_origins = (["*"] if settings.ENVIRONMENT == "development" 
+                     else ["https://crm.osipovich.uz",
+                           "https://api.osipovich.uz"]),
     allow_credentials = True,
-    allow_methods = ["*"],
-    allow_headers = ["*"]
+    allow_methods = ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers = ["Content-Type", "Authorization"]
 )
 
 register_exception_handlers(app)
