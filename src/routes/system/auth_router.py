@@ -16,9 +16,9 @@ get_auth_service = make_service_dependency(AuthService)
     response_model = LoginResponseSchema,
     summary = "Вход в систему",
     description = "Проверяет логин и пароль сотрудника и, в случае успеха, возвращает Cookie с access_token, refresh_token и информацию о пользователе. Организация должна быть активна.")
-async def login(data: LoginSchema, response: Response,
+async def login(data: LoginSchema, request: Request, response: Response,
                 authService: AuthService = Depends(get_auth_service)):
-    return await authService.login(data, response)
+    return await authService.login(data, request, response)
 
 @router.post(
     "/refresh",

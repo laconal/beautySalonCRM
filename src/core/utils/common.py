@@ -1,10 +1,24 @@
 from datetime import datetime, timezone
 import re
 
+from fastapi import Request
+
 from src.core.dependencies.context import get_current_tenant_id
 from src.core.dependencies.uow import UnitOfWork
 from src.exceptions.tenant_exceptions import BranchDoesNotBelongToTenant, TenantNotFound
 from src.repository.tenant.tenant_model import Tenant
+
+def get_client_ip(request: Request) -> str:
+    # App is only reachable via our nginx proxy, which sets X-Real-IP from $remote_addr — safe to trust without a proxy allowlist.
+    real_ip = request.headers.get("x-real-ip")
+    if real_ip:
+        return real_ip.strip()
+
+    forwarded_for = request.headers.get("x-forwarded-for")
+    if forwarded_for:
+        return forwarded_for.split(",")[0].strip()
+
+    return request.client.host if request.client else "unknown"
 
 def as_utc(value: datetime) -> datetime:
     if value.tzinfo is None:

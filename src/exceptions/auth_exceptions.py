@@ -18,6 +18,26 @@ class IncorrectCredentials(BaseAppException):
             errorCode = self.errorCode
         )
 
+class TooManyLoginAttempts(BaseAppException):
+    statusCode = 429
+    errorCode = "TOO_MANY_LOGIN_ATTEMPTS"
+    def __init__(self, blocked_until = None):
+        super().__init__(
+            detail="Too many failed login attempts from this IP, try again later",
+            errorCode = self.errorCode,
+            blocked_until = blocked_until.isoformat() if blocked_until else None
+        )
+
+class AccountTemporarilyLocked(BaseAppException):
+    statusCode = 429
+    errorCode = "ACCOUNT_TEMPORARILY_LOCKED"
+    def __init__(self, blocked_until = None):
+        super().__init__(
+            detail="This account is temporarily locked due to too many failed login attempts",
+            errorCode = self.errorCode,
+            blocked_until = blocked_until.isoformat() if blocked_until else None
+        )
+
 class IncorrectOldPassword(BaseAppException):
     statusCode = 401
     errorCode = "INCORRECT_OLD_PASSWORD"
