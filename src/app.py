@@ -21,11 +21,15 @@ app = FastAPI(lifespan = lifespan,
                 "defaultModelsExpandDepth": -1
             })
 
+ALLOWED_ORIGINS = [
+    "https://crm.osipovich.uz",
+    "https://api.osipovich.uz"
+]
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins = (["*"] if settings.ENVIRONMENT == "development" 
-                     else ["https://crm.osipovich.uz",
-                           "https://api.osipovich.uz"]),
+                     else ALLOWED_ORIGINS),
     allow_credentials = True,
     allow_methods = ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     allow_headers = ["Content-Type", "Authorization"]
