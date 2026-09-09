@@ -24,12 +24,14 @@ from src.repository.transaction.transaction_repository import TransactionReposit
 from src.repository.notification.notification_repository import NotificationRepository
 from src.repository.promotion.promotion_repository import PromotionRepository
 from typing import AsyncGenerator, TypeVar, Type, Callable
+from src.repository.staff.staffAuthAttempts_repository import StaffAuthAttemptsRepository
 
 T = TypeVar("T")
 
 class UnitOfWork:
     def __init__(self):
         self.staffs = StaffRepository()
+        self.staffAuthAttempts = StaffAuthAttemptsRepository()
         self.auditLogs = AuditLogsRepository()
 
         self.employees = EmployeeRepository()

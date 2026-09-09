@@ -17,3 +17,4 @@ from src.repository.transaction.transaction_model import Transaction
 from src.repository.notification.notification_model import Notification
 from src.repository.promotion.promotion_model import Promotion
 from src.repository.giftCard.giftCard_model import GiftCard
+from src.repository.staff.staffAuthAttempts_model import StaffAuthAttempts
