@@ -14,8 +14,9 @@ COPY alembic.ini .
 COPY entrypoint.sh .
 COPY migrate_docker.py .
 COPY manage_tenants.py .
+COPY generateFakeData.py .
 
 RUN chmod +x entrypoint.sh
 
-EXPOSE 8000
+EXPOSE 8101
 CMD ["./entrypoint.sh"]

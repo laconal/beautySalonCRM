@@ -15,8 +15,6 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-    networks:
-      - salon_net_test
 
   redis-salon-test:
     image: redis:7-alpine
@@ -27,8 +25,6 @@ services:
     volumes:
       - redis_data_test:/data
     command: redis-server --appendonly yes
-    networks:
-      - salon_net_test
 
   app:
     build: .
@@ -43,8 +39,6 @@ services:
     volumes:
       - ./src:/app/src
       - app_secrets_test:/app/secrets
-    networks:
-      - salon_net_test
 
   celery-worker-test:
     build: .
@@ -60,8 +54,6 @@ services:
       uv run celery -A src.core.celery.celeryApp.celery_app worker --loglevel=info
     volumes:
       - ./src:/app/src
-    networks:
-      - salon_net_test
 
   celery-beat-test:
     build: .
@@ -77,14 +69,8 @@ services:
       uv run celery -A src.core.celery.celeryApp.celery_app beat --loglevel=info
     volumes:
       - ./src:/app/src
-    networks:
-      - salon_net_test
 
 volumes:
   postgres_data_salon_test:
   redis_data_test:
   app_secrets_test:
-
-networks:
-  salon_net_test:
-    driver: bridge

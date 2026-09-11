@@ -1,15 +1,11 @@
 import logging
 from datetime import datetime, timedelta, timezone
-
+from typing import Literal
 from redis.exceptions import RedisError
-
 from src.core.cache.permission_cache import get_redis_client
+from src.core.config import settings
 
 logger = logging.getLogger(__name__)
-
-MAX_FAILED_ATTEMPTS = 10
-ATTEMPTS_WINDOW_TTL = 600  # 10 minutes
-BLOCK_TTL = 1800  # 30 minutes
 
 def _ip_attempts_key(ip: str) -> str:
     return f"login_ip:{ip}:attempts"
@@ -40,19 +36,25 @@ async def _blocked_until(blocked_key: str) -> datetime | None:
         logger.warning("Redis unavailable, could not read block expiration for key %s", blocked_key)
         return None
 
-async def _register_failure(attempts_key: str, blocked_key: str, label: str, identifier: str) -> int:
+async def _get_ttl(label: Literal["ip", "login"]) -> int:
+    return settings.LOGIN_BLOCK_TTL if label == "login" else settings.IP_BLOCK_TTL
+
+async def _register_failure(attempts_key: str, 
+        blocked_key: str,
+        label: Literal["ip", "login"], 
+        identifier: str) -> int:
     try:
         client = get_redis_client()
         attempts = await client.incr(attempts_key)
         if attempts == 1:
-            await client.expire(attempts_key, ATTEMPTS_WINDOW_TTL)
+            await client.expire(attempts_key, settings.ATTEMPTS_WINDOW_TTL)
 
         logger.warning("Failed login attempt (%s): %s attempt #%d", label, identifier, attempts)
 
-        if attempts >= MAX_FAILED_ATTEMPTS:
-            await client.set(blocked_key, 1, ex = BLOCK_TTL)
+        if attempts >= settings.LOGIN_MAX_FAILED_ATTEMPTS:
+            await client.set(blocked_key, 1, ex = _get_ttl(label))
             await client.delete(attempts_key)
-            logger.warning("Blocked login (%s): %s for %d seconds after %d failed attempts", label, identifier, BLOCK_TTL, attempts)
+            logger.warning("Blocked login (%s): %s for %d seconds after %d failed attempts", label, identifier, _get_ttl(label), attempts)
 
         return attempts
     except RedisError:
