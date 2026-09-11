@@ -48,13 +48,13 @@ async def _register_failure(attempts_key: str,
         attempts = await client.incr(attempts_key)
         if attempts == 1:
             await client.expire(attempts_key, settings.ATTEMPTS_WINDOW_TTL)
-
+        ttl = await _get_ttl(label)
         logger.warning("Failed login attempt (%s): %s attempt #%d", label, identifier, attempts)
 
         if attempts >= settings.LOGIN_MAX_FAILED_ATTEMPTS:
-            await client.set(blocked_key, 1, ex = _get_ttl(label))
+            await client.set(blocked_key, 1, ex = ttl)
             await client.delete(attempts_key)
-            logger.warning("Blocked login (%s): %s for %d seconds after %d failed attempts", label, identifier, _get_ttl(label), attempts)
+            logger.warning("Blocked login (%s): %s for %d seconds after %d failed attempts", label, identifier, ttl, attempts)
 
         return attempts
     except RedisError:
