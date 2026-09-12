@@ -22,20 +22,20 @@ class PayoutService():
         validPayrolls = []
 
         if payrollsIDs:
-            validPayrolls = await self.uow.payrolls.get_by_ids(payrollsIDs)
+            validPayrolls = await self.uow.payrolls.get_by_ids(payrollsIDs, lock = True)
             if len(validPayrolls) != len(payrollsIDs):
                 raise PayrollOneOrMoreNotFound()
-            
+
             for payroll in validPayrolls:
                 if payroll.employee_id != data.employee_id: raise PayrollNotAttachedToEmployee(payroll.id, data.employee_id)
                 if payroll.status == PayrollStatus.PAID: raise PayrollIsPaid(payroll.id)
                 if payroll.status == PayrollStatus.CANCELLED: raise PayrollIsCancelled(payroll.id)
 
         elif data.start_date and data.end_date:
-            validPayrolls = await self.uow.payrolls.get_pendings(data.employee_id, data.start_date, data.end_date)
+            validPayrolls = await self.uow.payrolls.get_pendings(data.employee_id, data.start_date, data.end_date, lock = True)
             if not validPayrolls: raise EmployeeDoesNotHavePayrolls(data.employee_id)
         else:
-            validPayrolls = await self.uow.payrolls.get_pendings(data.employee_id)
+            validPayrolls = await self.uow.payrolls.get_pendings(data.employee_id, lock = True)
             if not validPayrolls: raise EmployeeDoesNotHavePayrolls(data.employee_id)
 
         for payroll in validPayrolls:

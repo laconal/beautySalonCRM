@@ -1,13 +1,9 @@
 from datetime import date
-
 from sqlalchemy import func, select
-from sqlalchemy.orm import selectinload
 from src.core.utils.model_filter import apply_dynamic_filters
 from src.database.base import BaseRepository
 from src.repository.payroll.payroll_model import Payroll, PayrollStatus
 from src.schemas.base import PaginationSchema, RequestAllObject
-from src.schemas.payroll.create import PayrollCreateSchema
-from src.schemas.payroll.update import PayrollUpdateSchema
 
 class PayrollRepository(BaseRepository[Payroll]):
     async def create(self, payroll: Payroll) -> Payroll:
@@ -21,10 +17,11 @@ class PayrollRepository(BaseRepository[Payroll]):
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
     
-    async def get_by_ids(self, ids: list[int]) -> list[Payroll]:
-        result = await self.db.execute(
-            select(Payroll).where(Payroll.id.in_(ids))
-        )
+    async def get_by_ids(self, ids: list[int], lock: bool = False) -> list[Payroll]:
+        stmt = select(Payroll).where(Payroll.id.in_(ids))
+        if lock:
+            stmt = stmt.with_for_update()
+        result = await self.db.execute(stmt)
         return result.scalars().all()
     
     async def get_all(self, data: RequestAllObject) -> tuple[list[Payroll], int]:
@@ -54,18 +51,24 @@ class PayrollRepository(BaseRepository[Payroll]):
 
         return items, total_items
     
-    async def get_pendings(self, employee_id: int, start_date: date | None = None, end_date: date | None = None) -> list[Payroll]:
+    async def get_pendings(self, employee_id: int, 
+                           start_date: date | None = None, 
+                           end_date: date | None = None, 
+                           lock: bool = False) -> list[Payroll]:
         stmt = (select(Payroll)
             .where(
                 Payroll.employee_id == employee_id,
                 Payroll.status == PayrollStatus.PENDING
             ))
-        
+
         if start_date and end_date:
             stmt = stmt.where(
                 func.date(Payroll.created_at) >= start_date,
                 func.date(Payroll.created_at) <= end_date
             )
+
+        if lock:
+            stmt = stmt.with_for_update()
 
         result = await self.db.execute(stmt)
         return result.scalars().all()
