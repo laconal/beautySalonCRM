@@ -40,16 +40,11 @@ async def get_all(params: RequestAllObject,
     employeeService: EmployeeService = Depends(get_employee_service)):
     return await employeeService.get_all(params)
 
-# @router.post(
-#     "/get-many",
-#     response_model=list[EmployeeResponseBase], 
-#     status_code=status.HTTP_200_OK
-# )
-# async def get_many(data: list[int],
-#     employeeService: EmployeeService = Depends(get_employee_service)):
-#     return await employeeService.get_many(data)
-
-@router.get("/export")
+@router.get(
+    "/export",
+    status_code = 200,
+    summary = "Экспорт списка сотрудников, в формате Excel или JSON",
+    dependencies = [Depends(require_permission([PermissionCode.EMPLOYEE_EXPORT]))])
 async def export_employees(
     format: str = Query("json", pattern="^(json|xlsx)$"),
     employeeService: EmployeeService = Depends(get_employee_service),
@@ -78,14 +73,6 @@ async def get(id: int,
 async def update(data: EmployeeUpdateSchema,
     employeeService: EmployeeService = Depends(get_employee_service)):
     return await employeeService.update(data)
-
-# @router.delete(
-#     "/{id}",
-#     status_code = status.HTTP_204_NO_CONTENT
-# )
-# async def delete(id: int,
-#     employeeService: EmployeeService = Depends(get_employee_service)):
-#     return await employeeService.delete(id)
 
 @router.get(
     "/{id}/work-schedules",

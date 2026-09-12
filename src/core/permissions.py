@@ -36,6 +36,7 @@ class PermissionCode(IntEnum):
     EMPLOYEE_CREATE = 4001
     EMPLOYEE_UPDATE = 4002
     EMPLOYEE_READ = 4003
+    EMPLOYEE_EXPORT = 4004
     EMPLOYEE_MANAGE = 4999
 
     SERVICE_CREATE = 5001
@@ -155,6 +156,7 @@ PERMISSIONS: dict[int, dict[str, str]] = {
     PermissionCode.EMPLOYEE_CREATE: {"resource": "employee", "name": "Create employee"},
     PermissionCode.EMPLOYEE_UPDATE: {"resource": "employee", "name": "Update employee"},
     PermissionCode.EMPLOYEE_READ: {"resource": "employee", "name": "View employee"},
+    PermissionCode.EMPLOYEE_EXPOR: {"resource": "employee", "name": "Export employee"},
     PermissionCode.EMPLOYEE_MANAGE: {"resource": "employee", "name": "Full access to employees"},
 
     PermissionCode.SERVICE_CREATE: {"resource": "service", "name": "Create service"},
