@@ -163,7 +163,7 @@ PERMISSIONS: dict[int, dict[str, str]] = {
     PermissionCode.EMPLOYEE_CREATE: {"resource": "employee", "name": "Create employee"},
     PermissionCode.EMPLOYEE_UPDATE: {"resource": "employee", "name": "Update employee"},
     PermissionCode.EMPLOYEE_READ: {"resource": "employee", "name": "View employee"},
-    PermissionCode.EMPLOYEE_EXPOR: {"resource": "employee", "name": "Export employee"},
+    PermissionCode.EMPLOYEE_EXPORT: {"resource": "employee", "name": "Export employee"},
     PermissionCode.EMPLOYEE_MANAGE: {"resource": "employee", "name": "Full access to employees"},
 
     PermissionCode.SERVICE_CREATE: {"resource": "service", "name": "Create service"},
