@@ -70,13 +70,13 @@ class AppointmentService():
                             discount = info["base_price"] * (hasPromotion.discount_value / 100)
                             info["final_price"] = info["base_price"] - discount
 
-                if service.material_id:
+                if service.material_id is not None:
                     materialObj = await self.uow.materials.get(service.material_id)
                     if materialObj is None: raise MaterialNotFound(service.material_id)
                     if materialObj.archived: raise MaterialArchived(materialObj.id, materialObj.name)
                     if service.quantity > materialObj.quantity:
                         raise MaterialAmountInsufficient(materialObj.id, materialObj.name, service.quantity, materialObj.quantity)
-                    if service.price != materialObj.sell_price and (service.notes is None or len(service.notes.strip()) == 0):
+                    if (service.price != materialObj.sell_price and service.price is not None) and (service.price_changed_reason is None or len(service.price_changed_reason.strip()) == 0):
                         raise PriceChangedReasonEmpty()
 
                     info["base_price"] = materialObj.sell_price if service.price is None else service.price
