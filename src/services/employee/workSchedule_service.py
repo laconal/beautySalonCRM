@@ -50,7 +50,7 @@ class WorkScheduleService():
         updatedSchedules = []
         for schedule in data.work_schedules:
             scheduleExists = await self.uow.work_schedules.get(schedule.id)
-            if scheduleExists is None: raise WorkScheduleNotFound(data.id)
+            if scheduleExists is None: raise WorkScheduleNotFound(schedule.id)
             
             updated = await self.uow.work_schedules.update(
                 schedule.id,
