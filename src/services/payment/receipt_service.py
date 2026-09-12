@@ -280,8 +280,11 @@ class ReceiptService():
             deposit_to_refund -= receipt.change_amount
 
         if deposit_to_refund != 0:
-            client_id = receipt.appointment.client_id
+            client_id = (
+                receipt.appointment.client_id if receipt.receipt_type == ReceiptType.APPOINTMENT
+                else receipt.client_id)
             client = await self.uow.clients.get(client_id)
+            if client is None: raise ClientNotFound(client_id)
             if client:
                 new_deposit_balance = client.deposit + deposit_to_refund
                 await self.uow.clients.update(client.id, deposit = new_deposit_balance)
