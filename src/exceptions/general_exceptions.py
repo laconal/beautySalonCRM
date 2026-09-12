@@ -22,6 +22,7 @@ class FieldCannotBeEmpty(BaseAppException):
         )
 
 class CannotUpdate(BaseAppException):
+    statusCode = 404
     errorCode = "COULD_NOT_UPDATE"
     def __init__(self, id: int, table: str):
         super().__init__(
