@@ -13,16 +13,16 @@ from src.repository.material.material_model import Material, MeasurementUnit
 from src.repository.service.service_model import Service, ServiceCategory
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
-
+from src.core.config import settings
 from src.repository.payroll.payroll_model import Payroll, PayrollType
 
 fake = Faker("ru_RU")
 
-DB_NAME = "salon"
-DB_USER = "postgres"
-DB_PASSWORD = "postgres"
-DB_HOST = "localhost"
-DB_PORT = "5450"
+DB_NAME = settings.DB_NAME
+DB_USER = settings.DB_USER
+DB_PASSWORD = settings.DB_PASSWORD
+DB_HOST = settings.DB_HOST
+DB_PORT = settings.DB_PORT
 
 
 def run(cmd: list[str]) -> bool:
@@ -146,7 +146,7 @@ def seed_admin_user() -> None:
                 1,
                 'administrator',
                 true,
-                '$argon2id$v=19$m=65536,t=3,p=4$c29tZXNhbHQ$Eyo2xYv1fdJwRTeT/xFWS3c6SYqZhlYVI9gRUvcUdSc',
+                '$argon2id$v=19$m=4096,t=3,p=1$c29tZVNhbHQ$rXETHedPl0mfzcIvqlHhbfViL4PnLqVq3SrAfr6moWI',
                 1
             );
 
@@ -159,7 +159,7 @@ def seed_admin_user() -> None:
                 1,
                 'employee',
                 true,
-                '$argon2id$v=19$m=65536,t=3,p=4$c29tZXNhbHQ$Eyo2xYv1fdJwRTeT/xFWS3c6SYqZhlYVI9gRUvcUdSc',
+                '$argon2id$v=19$m=4096,t=3,p=1$c29tZVNhbHQ$rXETHedPl0mfzcIvqlHhbfViL4PnLqVq3SrAfr6moWI',
                 2
             );
 
@@ -172,7 +172,7 @@ def seed_admin_user() -> None:
                 2,
                 'administrator',
                 true,
-                '$argon2id$v=19$m=65536,t=3,p=4$c29tZXNhbHQ$Eyo2xYv1fdJwRTeT/xFWS3c6SYqZhlYVI9gRUvcUdSc',
+                '$argon2id$v=19$m=4096,t=3,p=1$c29tZVNhbHQ$rXETHedPl0mfzcIvqlHhbfViL4PnLqVq3SrAfr6moWI',
                 3
             );
         """,

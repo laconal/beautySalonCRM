@@ -2,7 +2,8 @@ from fastapi import APIRouter, Body, Depends, Request, Response
 from src.core.dependencies.auth import get_current_staff
 from src.core.dependencies.uow import make_service_dependency
 from src.schemas.auth.login import LoginResponseSchema, LoginSchema
-from src.schemas.auth.response import MeResponseSchema
+from src.schemas.auth.response import AuthAttemptResponseSchema, MeResponseSchema
+from src.schemas.base import PaginatedResponseSchema, RequestAllObject
 from src.schemas.staff.request import StaffUpdatePasswordSchema
 from src.services.auth.auth_service import AuthService
 
@@ -16,9 +17,9 @@ get_auth_service = make_service_dependency(AuthService)
     response_model = LoginResponseSchema,
     summary = "Вход в систему",
     description = "Проверяет логин и пароль сотрудника и, в случае успеха, возвращает Cookie с access_token, refresh_token и информацию о пользователе. Организация должна быть активна.")
-async def login(data: LoginSchema, response: Response,
+async def login(data: LoginSchema, request: Request, response: Response,
                 authService: AuthService = Depends(get_auth_service)):
-    return await authService.login(data, response)
+    return await authService.login(data, request, response)
 
 @router.post(
     "/refresh",
@@ -81,3 +82,15 @@ async def reset_password(
 async def get_me(authService: AuthService = Depends(get_auth_service),
                 current_staff: dict = Depends(get_current_staff)):
     return await authService.get_me()
+
+@router.post(
+    "/login_attempts",
+    response_model=PaginatedResponseSchema[AuthAttemptResponseSchema],
+    status_code= 200,
+    summary="Получить список попыток аутентификации",
+    description="Возвращает постраничный список попыток аутентификаций с поддержкой фильтрации."
+)
+async def get_all(params: RequestAllObject,
+                authService: AuthService = Depends(get_auth_service),
+                current_staff: dict = Depends(get_current_staff)):
+    return await authService.get_auth_attempts(params)

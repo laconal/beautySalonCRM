@@ -1,20 +1,34 @@
+import datetime
+import math
 import string
 from fastapi import Request, Response
 from src.core.cache.permission_cache import delete_staff_permissions, set_staff_permissions
 from src.core.config import settings
+from src.core.cache.login_attempts_cache import (
+    account_blocked_until,
+    ip_blocked_until,
+    is_account_blocked,
+    is_ip_blocked,
+    register_failed_account_login,
+    register_failed_ip_login,
+    reset_failed_account_login,
+    reset_failed_ip_login,
+)
 from src.core.dependencies.auth import is_tenant_active
 from src.core.dependencies.context import get_current_staff_id
 from src.core.dependencies.uow import UnitOfWork
 from src.core.permissions import compute_effective_permissions
-from src.exceptions.auth_exceptions import AdminPreviligesRequired, IncorrectCredentials, IncorrectOldPassword, RefreshTokenMissing, TenantIsInactive, TokenIsInvalid
+from src.core.utils.common import get_client_ip
+from src.exceptions.auth_exceptions import AccountTemporarilyLocked, AdminPreviligesRequired, IncorrectCredentials, IncorrectOldPassword, RefreshTokenMissing, TenantIsInactive, TokenIsInvalid, TooManyLoginAttempts
 from src.exceptions.employee_exceptions import EmployeeNotFound
 from src.exceptions.staff_exceptions import StaffIsInactive, StaffNotFound
 from src.repository.employee.employee_model import Employee
-from src.repository.staff.staff_model import Staff, StaffType
+from src.repository.staff.staff_model import StaffType
+from src.repository.staff.staffAuthAttempts_model import StaffAuthAttempts
 from src.schemas.auth.login import LoginResponseSchema, LoginSchema
 from src.core.auth.security import hash_password, verify_password, create_access_token, create_refresh_token, decode_token
 from src.schemas.auth.response import MeResponseSchema
-from src.schemas.base import ActorResponseSchema
+from src.schemas.base import ActorResponseSchema, RequestAllObject
 from src.schemas.employee.response import EmployeeResponseBase
 import secrets
 
@@ -24,12 +38,38 @@ class AuthService():
     def __init__(self, uow: UnitOfWork):
         self.uow = uow
 
-    async def login(self, data: LoginSchema, response: Response) -> LoginResponseSchema:
+    async def login(self, data: LoginSchema, request: Request, response: Response) -> LoginResponseSchema:
+        ip = get_client_ip(request)
+        entry = {
+            "ip": get_client_ip(request),
+            "user_agent": request.headers.get("user-agent", "unknown")
+        }
+
+        if await is_ip_blocked(ip):
+            raise TooManyLoginAttempts(await ip_blocked_until(ip))
+
+        if await is_account_blocked(data.login):
+            raise AccountTemporarilyLocked(await account_blocked_until(data.login))
+
         staff = await self.uow.staffs.get(login = data.login)
-            
+
         if staff is None or not verify_password(staff.hashed_password, data.password):
+            await register_failed_ip_login(ip)
+            await register_failed_account_login(data.login)
+
+            if staff is not None:
+                entry["staff_id"] = staff.id
+                entry["tenant_id"] = staff.tenant_id
+                entry["status"] = "failure"
+                newObject = StaffAuthAttempts(**entry)
+                await self.uow.staffAuthAttempts.create(newObject)
+                await self.uow.db.commit()
+
             raise IncorrectCredentials()
-        
+
+        await reset_failed_ip_login(ip)
+        await reset_failed_account_login(data.login)
+
         if not staff.active: raise StaffIsInactive()
         
         if not await is_tenant_active(staff.tenant_id): raise TenantIsInactive()
@@ -77,6 +117,13 @@ class AuthService():
         )
 
         tenant = await self.uow.tenants.get(id = staff.tenant_id)
+
+        entry["staff_id"] = staff.id
+        entry["tenant_id"] = staff.tenant_id
+        entry["status"] = "success"
+        newObject = StaffAuthAttempts(**entry)
+        await self.uow.staffAuthAttempts.create(newObject)
+
         return LoginResponseSchema(
             id = staff.id,
             tenant_id = staff.tenant_id,
@@ -228,3 +275,20 @@ class AuthService():
             active=staff.active,
             staff_type=staff.staff_type
         )
+
+    async def get_auth_attempts(self, data: RequestAllObject):
+        staff_id = get_current_staff_id()
+        staff = await self.uow.staffs.get(id = staff_id)
+        if staff is None: raise StaffNotFound()
+
+        items, total_items = await self.uow.staffAuthAttempts.get_all(data, staff_id)
+        
+        total_pages = math.ceil(total_items / data.pageSize) if data.pageSize > 0 else 0
+        
+        return {
+            "items": items,
+            "page": data.page,
+            "pageSize": data.pageSize,
+            "totalItems": total_items,
+            "totalPages": total_pages
+        }

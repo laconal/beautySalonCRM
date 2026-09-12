@@ -4,7 +4,14 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     ENVIRONMENT: Literal["development", "production"]
+
     DATABASE_URL: str
+    DB_NAME: str
+    DB_USER: str
+    DB_PASSWORD: str
+    DB_HOST: str
+    DB_PORT: str
+
     PRIVATE_KEY_PATH: str
     PUBLIC_KEY_PATH: str
     ALGORITHM: str
@@ -18,6 +25,11 @@ class Settings(BaseSettings):
     ADMIN_ALGORITHM: str
     ADMIN_ACCESS_TOKEN_EXPIRE_SECONDS: int
     SQLADMIN_SESSION_SECRET: str
+
+    LOGIN_MAX_FAILED_ATTEMPTS: int = 10
+    ATTEMPTS_WINDOW_TTL: int = 600 # in seconds
+    LOGIN_BLOCK_TTL: int = 3600 # in seconds
+    IP_BLOCK_TTL: int = 86400 # in seconds
 
     ERROR_ALERTS_BOT_TOKEN: str | None = None
     ERROR_ALERTS_CHAT_ID: str | None = None
