@@ -124,7 +124,7 @@ class AppointmentServicesService():
             .where(Receipt.appointment_id == appointmentID)
         )
         if any(receipt.status != ReceiptStatus.CANCELLED for receipt in receipts):
-            raise AppointmentHasActiveReceipts()
+            raise AppointmentHasActiveReceipts(appointment.id)
         
         material: Material | None = None
         if data.material_id:
