@@ -25,6 +25,6 @@ async def get_all() -> list[PermissionResponseSchema]:
     status_code = 200,
 )
 async def get(code: int):
-    if code not in PERMISSIONS: raise PermissionNotFound()
+    if code not in PERMISSIONS: raise PermissionNotFound(code)
     item = PERMISSIONS.get(code)
     return PermissionResponseSchema(code = code, resource = item["resource"], name = item["name"])
