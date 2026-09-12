@@ -14,6 +14,7 @@ async def provision_tenant(db: AsyncSession,
                            company_tin: str | None = None,
                            parent_id: int | None = None,
                            created_by_actor_id: int | None = None, ) -> Tenant:
+    
     defaultPreferences = TenantPreferencesSchema().model_dump()
     tenant = Tenant(
         name=company_name,

@@ -47,6 +47,8 @@ class TenantBranchesService:
     async def create(self, data: TenantBranchCreateSchema) -> dict:
         tenant = await get_current_tenant_or_raise(self.uow)
         creator_actor_id = get_current_actor_id()
+        duplicateCheck = await self.uow.tenants.get(name = data.company_name)
+        if duplicateCheck is not None: raise TenantNameTaken(data.company_name)
 
         # provision_tenant writes rows tagged with the new branch's tenant_id, which the
         # request's tenant-scoped session (self.uow.db) would reject as cross-tenant data
