@@ -97,9 +97,16 @@ class PermissionCode(IntEnum):
     TENANT_INTEGRATIONS_READ = 12001
     TENANT_PREFERENCES_READ = 12002
     TENANT_PREFERENCES_UPDATE = 12003
-    TENANT_MANAGE = 12004
+    TENANT_GET_REPORT = 12004
+    TENANT_MANAGE = 12005
+
     TENANT_BRANCH_CREATE = 12011
     TENANT_BRANCH_READ = 12012
+    TENANT_BRANCH_UDPATE = 12013
+    TENANT_BRANCH_CREATE_ADMIN = 12014
+    TENANT_BRANCH_UPDATE_ADMIN = 12015
+    TENANT_BRANCH_RESET_ADMIN_PASSWORD = 12016
+    TENANT_BRANCH_GET_REPORT = 12017
     TENANT_BRANCH_MANAGE = 12999
 
     PROMOTION_CREATE = 13001
@@ -226,9 +233,16 @@ PERMISSIONS: dict[int, dict[str, str]] = {
     PermissionCode.TENANT_INTEGRATIONS_READ: {"resource": "organization integrations", "name": "View organization integrations"},
     PermissionCode.TENANT_PREFERENCES_READ: {"resource": "organization settings", "name": "View organization settings"},
     PermissionCode.TENANT_PREFERENCES_UPDATE: {"resource": "organization settings", "name": "Update organization settings"},
+    PermissionCode.TENANT_GET_REPORT: {"resource": "organization settings", "name": "Access to reports"},
     PermissionCode.TENANT_MANAGE: {"resource": "organization settings", "name": "Full access to organization settings / integrations"},
+
     PermissionCode.TENANT_BRANCH_CREATE: {"resource": "organization branch", "name": "Create branch organization"},
     PermissionCode.TENANT_BRANCH_READ: {"resource": "organization branch", "name": "View branch organizations"},
+    PermissionCode.TENANT_BRANCH_UDPATE: {"resource": "organization branch", "name": "Update branch"},
+    PermissionCode.TENANT_BRANCH_CREATE_ADMIN: {"resource": "organization branch", "name": "Create branch's admin"},
+    PermissionCode.TENANT_BRANCH_UPDATE_ADMIN: {"resource": "organization branch", "name": "Update branch's admin info"},
+    PermissionCode.TENANT_BRANCH_RESET_ADMIN_PASSWORD: {"resource": "organization branch", "name": "Reset branch's admin password"},
+    PermissionCode.TENANT_BRANCH_GET_REPORT: {"resource": "organization branch", "name": "Report access to self and branches' reports"},
     PermissionCode.TENANT_BRANCH_MANAGE: {"resource": "organization branch", "name": "Full access to branch organizations"},
 }
 

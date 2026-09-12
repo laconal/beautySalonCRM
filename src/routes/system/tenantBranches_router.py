@@ -29,6 +29,7 @@ get_tenant_branches_service = make_service_dependency(TenantBranchesService)
     description = "Создает новый филиал (дочернюю организацию) и его администратора. Доступно только головной организации — у филиала создавать свои филиалы нельзя.",
     dependencies = [
         Depends(require_parent_tenant),
+        Depends(require_permission([PermissionCode.TENANT_BRANCH_CREATE]))
     ]
 )
 async def create(data: TenantBranchCreateSchema,
@@ -43,6 +44,7 @@ async def create(data: TenantBranchCreateSchema,
     description = "Создает нового админа для филиала (дочернюю организацию). Доступно только головной организации — у филиала создавать свои филиалы нельзя.",
     dependencies = [
         Depends(require_parent_tenant),
+        Depends(require_permission([PermissionCode.TENANT_BRANCH_CREATE_ADMIN]))
     ]
 )
 async def create_branch_admin(data: BranchAdminCreateSchema,
@@ -57,6 +59,7 @@ async def create_branch_admin(data: BranchAdminCreateSchema,
     description = "Возвращает список филиалов текущей организации.",
     dependencies = [
         Depends(require_parent_tenant),
+        Depends(require_permission([PermissionCode.TENANT_BRANCH_READ]))
     ]
 )
 async def get_all(tenantBranchesService: TenantBranchesService = Depends(get_tenant_branches_service)):
@@ -73,6 +76,7 @@ async def get_all(tenantBranchesService: TenantBranchesService = Depends(get_ten
     """,
     dependencies = [
         Depends(require_parent_tenant),
+        Depends(require_permission([PermissionCode.TENANT_BRANCH_RESET_ADMIN_PASSWORD]))
     ]
 )
 async def reset_admin_password(
@@ -90,6 +94,7 @@ async def reset_admin_password(
         "организации в целом. Доступно только головной организации.",
     dependencies = [
         Depends(require_parent_tenant),
+        Depends(require_permission([PermissionCode.TENANT_GET_REPORT]))
     ]
 )
 async def get_report(tenantBranchesService: TenantBranchesService = Depends(get_tenant_branches_service)):
@@ -104,6 +109,7 @@ async def get_report(tenantBranchesService: TenantBranchesService = Depends(get_
         "организации, и только для её собственных филиалов.",
     dependencies = [
         Depends(require_parent_tenant),
+        Depends(require_permission([PermissionCode.TENANT_BRANCH_GET_REPORT]))
     ]
 )
 async def get_branch_report(id: int, tenantBranchesService: TenantBranchesService = Depends(get_tenant_branches_service)):
@@ -119,6 +125,7 @@ async def get_branch_report(id: int, tenantBranchesService: TenantBranchesServic
         "обязательно. Доступно только головной организации.",
     dependencies = [
         Depends(require_parent_tenant),
+        Depends(require_permission([PermissionCode.TENANT_BRANCH_UPDATE_ADMIN]))
     ]
 )
 async def update_branch_admin(
@@ -136,6 +143,7 @@ async def update_branch_admin(
         "проверяется, что оно не занято другой организацией. Доступно только головной организации.",
     dependencies = [
         Depends(require_parent_tenant),
+        Depends(require_permission([PermissionCode.TENANT_BRANCH_UPDATE_ADMIN]))
     ]
 )
 async def update_branch(
