@@ -68,6 +68,13 @@ async def sqlalchemy_integrity_exception_handler(
             statusCode=409,
         )
 
+    if pgcode == "23P01" and constraint_name == "excl_employee_appointment_overlap":
+        raise BaseAppException(
+            detail="Employee is busy during these hours",
+            errorCode="EMPLOYEE_APPOINTMENT_TIME_CONFLICT",
+            statusCode=409,
+        )
+
     # Don't hide this during development
     print(
         "Unhandled IntegrityError:",

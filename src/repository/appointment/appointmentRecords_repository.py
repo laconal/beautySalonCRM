@@ -65,9 +65,12 @@ class AppointmentRecordsRepository(BaseRepository[AppointmentRecords]):
         items = result.scalars().all()
         return items, total_items
 
-    async def employee_has_overlap(self, employeeID: int, start: datetime, end: datetime) -> bool:
+    async def employee_has_overlap(self, employeeID: int,
+                                   start: datetime,
+                                   end: datetime,
+                                   lock: bool = False) -> bool:
         stmt = (
-            select(func.count(AppointmentRecords.id))
+            select(AppointmentRecords.id)
             .join(Appointment, AppointmentRecords.appointment_id == Appointment.id)
             .where(
                 AppointmentRecords.employee_id == employeeID,
@@ -77,5 +80,7 @@ class AppointmentRecordsRepository(BaseRepository[AppointmentRecords]):
             )
         )
 
-        count = await self.db.execute(stmt)
-        return count.scalar() > 0
+        if lock: stmt = stmt.with_for_update()
+
+        result = await self.db.execute(stmt)
+        return result.first() is not None

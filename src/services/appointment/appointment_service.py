@@ -28,6 +28,12 @@ class AppointmentService():
         
         if existing: raise ClientAppointmentConflict()
 
+        employee_ids = {record.employee_id for record in (data.records or [])}
+        if employee_ids:
+            temp = await self.uow.employees.lock_for_update(employee_ids)
+            for i in temp:
+                if i.id not in employee_ids: raise EmployeeNotFound(i.id)
+
         price_info: list[list[dict]] = []
 
         for record in (data.records or []):
@@ -40,7 +46,7 @@ class AppointmentService():
             if not isWorking: raise EmployeeDoesNotWork(employee.id, employee.firstname)
 
             has_conflict = await self.uow.appointmentRecords.employee_has_overlap(
-                employee.id, data.start_time_est, data.end_time_est
+                employee.id, data.start_time_est, data.end_time_est, True
             )
             if has_conflict: raise EmployeeAppointmentConflict(employee.id, employee.firstname)
 

@@ -121,12 +121,6 @@ class AppointmentRepository(BaseRepository[Appointment]):
         items = result.scalars().all()
         return items, total_items
 
-    # async def cancel(self, appointment: Appointment) -> Appointment:
-    #     appointment.status = AppointmentStatus.CANCELLED
-    #     await self.db.flush()
-    #     await self.db.refresh(appointment)
-    #     return appointment
-
     async def client_has_overlap(self, clientID: int, start: datetime, end: datetime) -> bool:
         stmt = select(Appointment).where(
                 Appointment.client_id == clientID,
