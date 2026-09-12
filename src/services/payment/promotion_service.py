@@ -26,10 +26,21 @@ class PromotionService():
             if material is None: raise MaterialNotFound(id)
             if material.archived: raise ObjectIsArchived(id, "materials")
 
-    async def create(self, data: PromotionCreateSchema) -> Promotion:
-        if data.service_id: await self._unusable_object(data.service_id, "services")
-        if data.material_id: await self._unusable_object(data.material_id, "materials")
+    async def _check_if_using(self, objectID: int, 
+                              table: Literal["service", "material"]):
+        checkIfUsing = await self.uow.promotions.get_by_object(objectID, table)
+        if checkIfUsing is not None and checkIfUsing.is_active:
+            raise PromotionTargetConflict(table, objectID, checkIfUsing.id, checkIfUsing.name)
 
+    async def create(self, data: PromotionCreateSchema) -> Promotion:
+        await self._unusable_object(
+            data.service_id if data.service_id else data.material_id,
+            "services" if data.service_id else "materials")
+
+        await self._check_if_using(
+            data.service_id if data.service_id else data.material_id,
+            "service" if data.service_id else "material")
+        
         promotionData = data.model_dump()
         newObject = Promotion(**promotionData)
         return await self.uow.promotions.create(newObject)
@@ -49,19 +60,14 @@ class PromotionService():
         ):
             raise PromotionDiscountPercentageExceed(data.discount_value)
 
-        if data.service_id:
-            checkIfUsing = await self.uow.promotions.get_by_object(data.service_id, "service")
-            if checkIfUsing is not None and checkIfUsing.is_active:
-                raise PromotionTargetConflict("service", data.service_id, checkIfUsing.id, checkIfUsing.name)
+        await self._unusable_object(
+            data.service_id if data.service_id else data.material_id,
+            "services" if data.service_id else "materials")
+        
+        await self._check_if_using(
+            data.service_id if data.service_id else data.material_id,
+            "service" if data.service_id else "material")
             
-            await self._unusable_object(data.service_id, "services")
-
-        if data.material_id:
-            checkIfUsing = await self.uow.promotions.get_by_object(data.material_id, "material")
-            if checkIfUsing is not None and checkIfUsing.is_active:
-                raise PromotionTargetConflict("material", data.material_id, checkIfUsing.id, checkIfUsing.name)
-            
-            await self._unusable_object(data.material_id, "materials")
 
         data.promo_type = effective_promo_type
         dataDict = data.model_dump(exclude = {"id"}, exclude_unset = True)
