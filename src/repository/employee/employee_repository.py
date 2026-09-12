@@ -42,22 +42,13 @@ class EmployeeRepository(BaseRepository[Employee]):
         items = result.scalars().all()
         return items, total_items
 
-    async def get_by_ids(self, ids: list[int]) -> list[Employee]:
-        result = await self.db.execute(
+    async def get_by_ids(self, ids: list[int], lock: bool = False) -> list[Employee]:
+        stmt = (
             select(Employee)
             .where(Employee.id.in_(ids))
             .options(selectinload(Employee.services))
         )
-        return result.scalars().all()
-
-    async def lock_for_update(self, ids: list[int]) -> list[Employee]:
-        # ordered by id so concurrent callers acquire locks in the same order and never deadlock
-        stmt = (
-            select(Employee)
-            .where(Employee.id.in_(ids))
-            .order_by(Employee.id)
-            .with_for_update()
-        )
+        if lock: stmt = stmt.order_by(Employee.id).with_for_update()
         result = await self.db.execute(stmt)
         return result.scalars().all()
 

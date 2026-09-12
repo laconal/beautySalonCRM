@@ -30,9 +30,10 @@ class AppointmentService():
 
         employee_ids = {record.employee_id for record in (data.records or [])}
         if employee_ids:
-            temp = await self.uow.employees.lock_for_update(employee_ids)
-            for i in temp:
-                if i.id not in employee_ids: raise EmployeeNotFound(i.id)
+            temp = await self.uow.employees.get_by_ids(list(employee_ids), lock = True)
+            found_ids = {e.id for e in temp}
+            missing = employee_ids - found_ids
+            if missing: raise EmployeeNotFound(next(iter(missing)))
 
         price_info: list[list[dict]] = []
 

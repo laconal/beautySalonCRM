@@ -14,10 +14,10 @@ class MaterialRepository(BaseRepository[Material]):
         await self.db.refresh(material)
         return material
     
-    async def get_by_ids(self, ids: list[int]) -> list[Material]:
-        result = await self.db.execute(
-            select(Material).where(Material.id.in_(ids))
-        )
+    async def get_by_ids(self, ids: list[int], lock: bool = False) -> list[Material]:
+        stmt = select(Material).where(Material.id.in_(ids))
+        if lock: stmt = stmt.order_by(Material.id).with_for_update()
+        result = await self.db.execute(stmt)
         return result.scalars().all()
     
     async def get_all(self, data: RequestAllObject) -> tuple[list[Material], int]:

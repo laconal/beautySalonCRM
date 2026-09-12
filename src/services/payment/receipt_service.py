@@ -81,9 +81,14 @@ class ReceiptService():
         else:
             runningSubTotal = 0
             runningTotal = 0
-            
+
+            material_ids = list({item.material_id for item in data.receipt_items})
+            materials_by_id = {
+                m.id: m for m in (await self.uow.materials.get_by_ids(material_ids, lock = True) if material_ids else [])
+            }
+
             for item_data in data.receipt_items:
-                material = await self.uow.materials.get(item_data.material_id)
+                material = materials_by_id.get(item_data.material_id)
                 if material is None: raise MaterialNotFound(item_data.material_id)
                 if material.archived: raise ObjectIsArchived(material.id, "materials")
                 if material.quantity < item_data.quantity: raise MaterialAmountInsufficient(material.id, material.name, item_data.quantity, material.quantity)
@@ -326,8 +331,13 @@ class ReceiptService():
 
         # return used materials to stock
         if receipt.receipt_type == ReceiptType.DIRECT_SALE:
+            material_ids = list({item.material_id for item in receipt.items if item.material_id is not None})
+            materials_by_id = {
+                m.id: m for m in (await self.uow.materials.get_by_ids(material_ids, lock = True) if material_ids else [])
+            }
+
             for receiptItem in receipt.items:
-                material = await self.uow.materials.get(receiptItem.material_id)
+                material = materials_by_id.get(receiptItem.material_id)
                 if not material: continue
                 newQuantity = material.quantity + receiptItem.quantity
                 await self.uow.materials.update(material.id, quantity = newQuantity)
