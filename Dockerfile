@@ -17,5 +17,5 @@ COPY generateFakeData.py .
 
 RUN chmod +x entrypoint.sh
 
-EXPOSE 8101
+EXPOSE 8000
 CMD ["./entrypoint.sh"]
