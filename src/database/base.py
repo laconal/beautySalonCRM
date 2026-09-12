@@ -155,8 +155,7 @@ class BaseRepository(Generic[T]):
             await self.db.refresh(obj)
             return obj
         except Exception as e:
-            print(f"Database integrity error: {e}")
-            raise
+            raise e
 
     async def archive(self, id: int) -> T | None:
         return self.update(id, archived = True)

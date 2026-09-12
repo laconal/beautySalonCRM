@@ -172,7 +172,6 @@ class ReceiptService():
             applied_amount = data.amount - overpayment
             if data.method == TransactionMethod.GIFT_CARD:
                 giftCard.remain_amount -= applied_amount
-                print(giftCard.remain_amount)
 
             if overpayment > 0:
             # if payment method not gift_card - consider overpayment to add client's deposit

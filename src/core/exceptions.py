@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
 from starlette.background import BackgroundTask
-
+from src.core.config import settings
 from src.core.telegram_alerts import send_error_alert
 from src.exceptions.base import BaseAppException
 
@@ -76,7 +76,7 @@ async def sqlalchemy_integrity_exception_handler(
             "constraint": constraint_name,
             "orig": repr(orig),
         },
-    )
+    ) if settings.ENVIRONMENT == "development" else print()
 
     raise BaseAppException(
         detail="Database integrity violation",
