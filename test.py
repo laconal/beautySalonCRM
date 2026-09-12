@@ -1,4 +1,3 @@
-a = [1,2,7,8]
-b = [3,4,5,6]
-for i in b:
-    if i not in a: print("not inf")
+a = {1,3,5,6}
+b = list(a)
+print(type(b))

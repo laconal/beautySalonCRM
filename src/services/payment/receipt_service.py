@@ -116,7 +116,7 @@ class ReceiptService():
             if "idx_unique_active_receipt_per_appointment" in error_msg:
                 raise BaseAppException(
                     detail = "Conflict, for this appointment active receipt was created in parallel",
-                    errroCode = "RECEIPT_CREATION_CONFLICT",
+                    errorCode = "RECEIPT_CREATION_CONFLICT",
                     statusCode = 500
                 )
 
@@ -124,7 +124,7 @@ class ReceiptService():
             raise BaseAppException(
                 detail = f"Database integrity violance: {error_msg}",
                 errorCode = "DATABASE_INTEGRITY_VIOLANCE",
-                statudCode = 500,
+                statusCode = 500,
                 error = error_msg
             )
     
@@ -290,7 +290,7 @@ class ReceiptService():
                 await self.uow.clients.update(client.id, deposit = new_deposit_balance)
 
         # cancel payments and payrolls
-        if receipt:
+        if receipt.receipt_type == ReceiptType.APPOINTMENT:
             stmt = await self.uow.db.execute(
                 select(Payroll)
                 .where( 
@@ -300,8 +300,16 @@ class ReceiptService():
             )
             payrolls = stmt.scalars().all()
             # cancel payrolls
+            payoutsToCancel: set = {}
             for payroll in payrolls:
                 payroll.status = PayrollStatus.CANCELLED
+                if payroll.payout_id is not None: payoutsToCancel.add(payroll.payout_id)
+
+            if payoutsToCancel:
+                payouts = await self.uow.payouts.get_by_ids(list(payoutsToCancel))
+                for p in payouts: 
+                    p.cancelled = True
+                    for t in p.transactions or []: t.cancelled = True
 
         # return used materials to stock
         if receipt.receipt_type == ReceiptType.DIRECT_SALE:

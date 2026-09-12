@@ -14,7 +14,9 @@ class PayoutRepository(BaseRepository[Payout]):
     
     async def get_by_ids(self, ids: list[int]) -> list[Payout]:
         result = await self.db.execute(
-            select(Payout).where(Payout.id.in_(ids))
+            select(Payout)
+            .where(Payout.id.in_(ids))
+            .options(selectinload(Payout.transactions))
         )
         return result.scalars().all()
     
