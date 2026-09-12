@@ -4,7 +4,7 @@ from sqlalchemy.exc import IntegrityError
 from src.core.dependencies.uow import UnitOfWork
 from src.exceptions.client_exceptions import ClientNotFound
 from src.exceptions.general_exceptions import CannotUpdate, ObjectIsArchived
-from src.exceptions.giftCard_exceptions import GiftCardCharged, GiftCardNotFound
+from src.exceptions.giftCard_exceptions import GiftCardCancelled, GiftCardCharged, GiftCardNotFound
 from src.repository.giftCard.giftCard_model import GiftCard, GiftCardStatus
 from src.repository.receipt.receipt_model import Receipt, ReceiptItem, ReceiptStatus, ReceiptType
 from src.repository.transaction.transaction_model import Transaction, TransactionCategory, TransactionMethod, TransactionType
@@ -126,7 +126,7 @@ class GiftCardService():
     async def cancel(self, data: GiftCardCancelSchema) -> GiftCard:
         giftCard = await self.uow.giftCards.get(data.id)
         if giftCard is None: raise GiftCardNotFound(data.id)
-
+        if giftCard.status == GiftCardStatus.CANCELLED: raise GiftCardCancelled(data.id)
         if giftCard.initial_amount != giftCard.remain_amount:
             raise GiftCardCharged(data.id)
 
