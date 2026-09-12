@@ -161,7 +161,7 @@ class ReceiptService():
             if giftCard is None: raise GiftCardNotFound(data.giftCard_id)
             if giftCard.status != GiftCardStatus.ACTIVE: raise GiftCardUnusable(data.giftCard_id, giftCard.status)
             if giftCard.client_id is not None and giftCard.client_id != receipt.client_id: 
-                raise GiftCardClientConflict(data.giftCard_id, data.client_id)
+                raise GiftCardClientConflict(data.giftCard_id, giftCard.client_id)
             if data.amount > giftCard.remain_amount: raise GiftCardInsufficientAmount(data.giftCard_id, data.amount, giftCard.remain_amount)
             if giftCard.expiration_date is not None and giftCard.expiration_date < datetime.now(timezone.utc):
                 raise GiftCardUnusable(data.giftCard_id, GiftCardStatus.EXPIRED)
