@@ -1,3 +1,5 @@
-a = {1,3,5,6}
-b = list(a)
-print(type(b))
+a = 5
+if a == 6: print(1)
+else: print(2)
+
+print(3)

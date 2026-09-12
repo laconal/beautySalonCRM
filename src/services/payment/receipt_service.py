@@ -12,11 +12,11 @@ from src.exceptions.employee_exceptions import EmployeeNotFound
 from src.exceptions.general_exceptions import ObjectIsArchived, PaymentCancelDueExpired
 from src.exceptions.giftCard_exceptions import GiftCardClientConflict, GiftCardInsufficientAmount, GiftCardNotFound, GiftCardUnusable
 from src.exceptions.material_exceptions import MaterialAmountInsufficient, MaterialNotFound
-from src.exceptions.receipt_exceptions import ReceiptHasNotClient, ReceiptIsCancelled, ReceiptIsPaid, ReceiptNotFound, ReceiptOverpayment, ReceiptWithEmptyAppointmentRecords
-from src.exceptions.tenant_exceptions import TenantNotFound
+from src.exceptions.receipt_exceptions import ReceiptHasNotClient, ReceiptIsCancelled, ReceiptIsPaid, ReceiptNotFound, ReceiptWithEmptyAppointmentRecords
 from src.repository.appointment.appointment_model import AppointmentServices, AppointmentStatus
 from src.repository.client.client_model import Client
 from src.repository.giftCard.giftCard_model import GiftCardStatus
+from src.repository.promotion.promotion_model import PromotionType
 from src.repository.receipt.receipt_model import Receipt, ReceiptItem, ReceiptStatus, ReceiptType
 from src.repository.payroll.payroll_model import Payroll, PayrollStatus, PayrollType
 from src.repository.transaction.transaction_model import Transaction, TransactionCategory, TransactionMethod, TransactionType
@@ -78,34 +78,44 @@ class ReceiptService():
             
             newReceipt.subtotal_amount = runningSubTotal
             newReceipt.total_amount = runningTotal
-
         else:
             runningSubTotal = 0
-            runningTotal = 0 
+            runningTotal = 0
             
             for item_data in data.receipt_items:
                 material = await self.uow.materials.get(item_data.material_id)
                 if material is None: raise MaterialNotFound(item_data.material_id)
                 if material.archived: raise ObjectIsArchived(material.id, "materials")
                 if material.quantity < item_data.quantity: raise MaterialAmountInsufficient(material.id, material.name, item_data.quantity, material.quantity)
+                finalPrice: int = material.sell_price
+
+                hasPromotion = await self.uow.promotions.get_by_object(item_data.material_id, "material")
+                if hasPromotion is not None:
+                    if hasPromotion.promo_type == PromotionType.FIXED_AMOUNT and hasPromotion.discount_value:
+                        discount = material.sell_price - hasPromotion.discount_value
+                        finalPrice = discount if discount >= 0 else 0
+                    elif hasPromotion.promo_type == PromotionType.PERCENTAGE and hasPromotion.discount_value:
+                        discount = material.sell_price * (hasPromotion.discount_value / 100)
+                        finalPrice = material.sell_price - discount
                 
                 newQuantity = material.quantity - item_data.quantity
                 await self.uow.materials.update(material.id, quantity = newQuantity)
-                
-                item_price = material.sell_price
-                runningSubTotal += item_price * item_data.quantity
+
+                runningSubTotal += material.sell_price * item_data.quantity
+                runningTotal += finalPrice * item_data.quantity
                 
                 receipt_item = ReceiptItem(
                     receipt_id = newReceipt.id,
-                    material_id=item_data.material_id,
-                    base_price = item_price,
-                    final_price = item_price,
-                    quantity=item_data.quantity
+                    material_id = material.id,
+                    base_price = material.sell_price,
+                    final_price = finalPrice,
+                    quantity = item_data.quantity
                 )
                 
                 newReceipt.items.append(receipt_item)
-            
-            newReceipt.total_amount = runningSubTotal
+
+            newReceipt.subtotal_amount = runningSubTotal
+            newReceipt.total_amount = runningTotal
 
         try:
             return await self.uow.receipts.create(newReceipt)
@@ -154,7 +164,10 @@ class ReceiptService():
             if receipt.client_id is None: raise ReceiptHasNotClient(data.receipt_id)
             client = await self.uow.clients.get(receipt.client_id)
             if client is None: raise ClientNotFound(receipt.client_id)
+
             depositAdjustment -= data.amount
+            if data.amount > client.deposit:
+                raise DepositNotEnough(client.id, client.firstname, data.amount, client.deposit)
 
         if data.method == TransactionMethod.GIFT_CARD:
             giftCard = await self.uow.giftCards.get(data.giftCard_id)
@@ -190,7 +203,9 @@ class ReceiptService():
                             if not data.add_change_to_deposit
                             else TransactionType.INCOME),
                     method = TransactionMethod(data.method),
-                    category = TransactionCategory.CHANGE,
+                    category = (TransactionCategory.CHANGE
+                                if not data.add_change_to_deposit
+                                else TransactionCategory.DEPOSIT_FULLFILLMENT),
                     auto_generated = True
                 ))
 
@@ -201,7 +216,8 @@ class ReceiptService():
                 amount = applied_amount,
                 type = TransactionType.INCOME if data.method in [TransactionMethod.CARD,
                     TransactionMethod.CASH,
-                    TransactionMethod.BANK_TRANSFER] else TransactionType.EXPENSE,
+                    TransactionMethod.BANK_TRANSFER,
+                    TransactionMethod.GIFT_CARD] else TransactionType.EXPENSE,
                 method = TransactionMethod(data.method),
                 category = TransactionCategory.RECEIPT,
                 auto_generated = True
@@ -255,9 +271,6 @@ class ReceiptService():
 
         # substract payment sum from client's deposit
         if depositAdjustment != 0 and client is not None:
-            if data.method == TransactionMethod.DEPOSIT and data.amount > client.deposit:
-                raise DepositNotEnough(client.id, client.firstname, data.amount, client.deposit)
-
             final_deposit_balance = client.deposit + depositAdjustment
             await self.uow.clients.update(client.id, deposit = final_deposit_balance)
 

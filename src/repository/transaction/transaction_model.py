@@ -26,6 +26,7 @@ class TransactionCategory(StrEnum):
     RECEIPT = "receipt"
     EMPLOYEE_PAYMENT = "employee payment"
     CHANGE = "change"
+    DEPOSIT_FULLFILLMENT = "deposit fullfillment"
     GIFT_CARD = "gift card"
     UTILITY = "utility"
     INTERNET = "internet"

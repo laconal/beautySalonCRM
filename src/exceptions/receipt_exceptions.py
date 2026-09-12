@@ -30,15 +30,6 @@ class ReceiptIsPaid(BaseAppException):
             id = id
         )
 
-class ReceiptOverpayment(BaseAppException):
-    statusCode = 409
-    errorCode = "RECEIPT_OVERPAYMENT"
-    def __init__(self):
-        super().__init__(
-            detail = "Overpayment, change payment amount or set `add_changes_to_deposit` to `true`",
-            errorCode = self.errorCode,
-        )
-
 class ReceiptIsCancelled(BaseAppException):
     statusCode = 409
     errorCode = "RECEIPT_IS_CANCELLED"
