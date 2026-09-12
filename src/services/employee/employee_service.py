@@ -50,7 +50,8 @@ class EmployeeService():
     async def update(self, data: EmployeeUpdateSchema) -> Employee:
         checkArchived = await self.uow.employees.get(data.id)
         if checkArchived is None: raise EmployeeNotFound(data.id)
-        if checkArchived.archived: raise EmployeeIsArchived(data.id, data.firstname)
+        if checkArchived.archived and data.archived is None: 
+            raise EmployeeIsArchived(data.id, checkArchived.firstname)
 
         dataDict = data.model_dump(exclude={"id"}, exclude_unset=True)
         if data.services is not None:
@@ -64,7 +65,7 @@ class EmployeeService():
 
         if data.specialization_id is not None:
             specialization = await self.uow.specializations.get(data.specialization_id)
-            if specialization is None: raise SpecializationNotFound()
+            if specialization is None: raise SpecializationNotFound(data.specialization_id)
             if specialization.archived: raise SpecializationIsArchived(data.specialization_id, specialization.name)
         
         result = await self.uow.employees.update(data.id, **dataDict)

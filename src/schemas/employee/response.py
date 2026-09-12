@@ -16,7 +16,8 @@ class EmployeeResponseBase(BaseResponseSchema):
     salary_fixed: int = 0
     percent_from_services: int = 0
     percent_from_sales: int = 0
-
+    notes: str | None = None
+    
     model_config = ConfigDict(from_attributes=True)
 
 class EmployeeWorkScheduleResponse(BaseModel):

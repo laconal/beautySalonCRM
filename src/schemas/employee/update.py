@@ -1,6 +1,6 @@
-from typing import Annotated
+from typing import Annotated, Self
 from src.schemas.base import BaseUpdateSchema
-from pydantic import Field
+from pydantic import Field, model_validator
 from datetime import date
 
 class EmployeeUpdateSchema(BaseUpdateSchema):
